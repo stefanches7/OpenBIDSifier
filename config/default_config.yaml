@@ -1,0 +1,37 @@
+# Default configuration for AI Neuro Wrangler
+
+# Volume normalization settings
+normalization:
+  method: zscore  # Options: zscore, minmax, percentile
+  clip_percentiles: [1, 99]  # For percentile normalization
+
+# Quality control settings
+quality_control:
+  min_snr: 10.0  # Minimum signal-to-noise ratio
+  max_outlier_ratio: 0.05  # Maximum ratio of outlier voxels
+  check_dimensions: true
+  check_artifacts: true
+  check_motion: true
+
+# Outlier detection settings
+outlier_detection:
+  method: zscore  # Options: zscore, iqr, isolation_forest
+  threshold: 3.0  # Z-score threshold for outlier detection
+  contamination: 0.1  # For isolation_forest method
+
+# Label encoding settings
+label_encoding:
+  encoding_type: label  # Options: label, onehot
+  categorical_columns: null  # Auto-detect if null
+  ordinal_columns: null  # Specify ordered categories if needed
+  # Example ordinal_columns:
+  #   diagnosis: [control, mild, moderate, severe]
+  #   education: [primary, secondary, undergraduate, graduate]
+
+# Output settings
+output:
+  save_normalized: true
+  save_qc_report: true
+  save_outlier_report: true
+  save_encoding_map: true
+  report_format: markdown  # Options: markdown, html, json

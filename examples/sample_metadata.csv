@@ -1,0 +1,11 @@
+subject_id,age,sex,diagnosis,site,scanner_model,education_level
+sub-001,45,M,control,site1,Siemens_3T,undergraduate
+sub-002,52,F,patient,site1,Siemens_3T,graduate
+sub-003,38,M,control,site2,GE_3T,secondary
+sub-004,61,F,patient,site2,GE_3T,undergraduate
+sub-005,43,M,control,site1,Siemens_3T,graduate
+sub-006,55,F,patient,site3,Philips_3T,undergraduate
+sub-007,48,M,patient,site1,Siemens_3T,secondary
+sub-008,41,F,control,site2,GE_3T,undergraduate
+sub-009,59,M,patient,site3,Philips_3T,primary
+sub-010,37,F,control,site1,Siemens_3T,graduate
