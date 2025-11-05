@@ -36,7 +36,7 @@ and really any other OpenNeuro dataset.
 
 6 WPs are the following
 Harmonizing **metadata** *with LLM based tools*:
-1. Annotation column names (from non-BIDS to BIDS)
+1. Annotation column names (from non-BIDS to BIDS) - working with tabular data
 2. File structure
 3. Study metadata (fetching from repository HTMLs too)
 
@@ -46,7 +46,7 @@ Suggestions bigger LLMs: GPT-5, Claude, Kimi-K2, DeepSeek-R1
 Suggestions smaller LLMs: SmoLM, LLaMA-7B, Qwen-7B
 
 Harmonizing **metadata** *by hand*:
-4. Annotation column names (from non-BIDS to BIDS)
+4. Annotation column names (from non-BIDS to BIDS) - working with tabular data
 5. File structure
 6. Study metadata (fetching from repository HTMLs too)
 
@@ -55,7 +55,7 @@ For the manual harmonization, an IDE with Python / R is useful; as well as OpenR
 
 Record the problems and the working time for both manual and LLM assisted harmonization.
 
-Time planned: ~5 hours working time are planned for this step.
+Time planned: ~4 hours working time are planned for this step.
 
 ### 2. Evaluation of the harmonized metadata
 
@@ -67,7 +67,7 @@ Use [BIDS validator](https://bids-standard.github.io/bids-validator/) on the new
 3. Assess the differences in the harmonized metadata.
 4. Try to "stack" BIDS converted datasets on old BIDS datasets, and report the errors.
 
-Time planned: ~4 hours.
+Time planned: ~3 hours.
 
 ### 3. Try in action
 
