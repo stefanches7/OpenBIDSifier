@@ -1,6 +1,6 @@
-#  Open Data BIDSifier: LLM-based Data format conversion
+#  Open Data BIDSifier: LLM-based BIDSifier and metadata harmonization for non-BIDS datasets
 
-This is the repository for an exploratory project OpenMind Wranglers, inspired by the accelerating progress of LLMs and their potential to automate format conversion for multi-study neuroimaging and clinical datasets.
+This is the repository for an exploratory project Open Data BIDSifier, inspired by the accelerating progress of LLMs and their potential to automate format conversion for multi-study neuroimaging and clinical datasets.
 
 ## Motivation
 
@@ -14,7 +14,7 @@ In this proof-of-concept, we aim to determine whether a coordinated system of AI
 
 ## The Vision
 
-If successful, Open Data Wrangler will serve as a foundation for harmonizing multi-study datasets from open data, making sure these are immediately usable for machine learning and statistical analysis.
+If successful, Open Data BIDSifier will serve as a foundation for harmonizing multi-study datasets from open data, making sure these are immediately usable for machine learning and statistical analysis.
 
 ## Rough Work Plan
 
@@ -84,3 +84,5 @@ For working with LLM agents, prompt engineering skills can be useful, though can
 
 - [What is an AI agent](https://blog.langchain.com/how-to-think-about-agent-frameworks/)
 - [Prompting guide from Meta](https://www.llama.com/docs/how-to-guides/prompting/)
+- [Metadata Harmonization from Biological Datasets with Language Models](https://doi.org/10.1101/2025.01.15.633281)
+- [Unifying Heterogeneous Medical Images Using Large Language Models](10.5281/zenodo.15480675)
