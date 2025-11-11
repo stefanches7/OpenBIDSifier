@@ -14,7 +14,34 @@ In this proof-of-concept, we aim to determine whether a coordinated system of AI
 
 ## The Vision
 
-If successful, Open Data BIDSifier will serve as a foundation for harmonizing multi-study datasets from open data, making sure these are immediately usable for machine learning and statistical analysis.
+If successful, Open Data BIDSifier will serve as a foundation for an AI agent that can identify and harmonize different datasets from open data, making sure these are immediately usable for machine learning and statistical analysis.
+
+## Tools and Structure 
+
+We will use this repository (https://github.com/stefanches7/AI-assisted-Neuroimaging-harmonization) as an intermittant commit place. Please, make yourself familiar with Git and Github. [This intro](https://docs.github.com/de/get-started/start-your-journey/hello-world) can be useful for that.
+
+### Git guidelines
+
+Open a new branch and create Pull requests to the main for the additions. 
+
+### Working with data 
+
+We will work with raw data (Neuroimaging) and annotation / metadata (tabular data).
+For Neuroimaging, `nibabel` (.nii file format) and `pydicom` (.dcm file format) are the most advanced Python libraries. 
+For working with tabular data and manual harmonization, Python package `pandas` is the standard way; as well as OpenRefine, an open-source tool for working with tabular data.
+
+### LLM usage
+
+For the LLM-assisted workflow, following **tools** are suggested: Github Copilot in VS Code, LLMAnything. 
+Pick **any LLM** really, smaller LLMs tend to hallucinate more, therefore it is more interesting if they can make it too!
+Suggestions bigger LLMs: GPT-5, Claude, Kimi-K2, DeepSeek-R1
+Suggestions smaller LLMs: SmoLM, LLaMA-7B, Qwen-7B
+
+### Coding & Vibe Coding
+
+We will use **Python** to code. I recommend using **Anaconda** package manager as a tool to manage the Python package environments. If you are not sure what the previous 2 sentences really mean, I recommend [reading this intro to Python & Conda](https://www.anaconda.com/topics/choosing-between-anaconda-vs-python#:~:text=Anaconda%20is%20a%20distribution%20that,machine%20learning%2C%20and%20scientific%20computing.)
+
+LLMs can assist in writing code, but can also prove counterproductive and write bad (spaghetti), duplicated and erroneous code. It is instructful to be able check their output and correct it manually.
 
 ## Rough Work Plan
 
@@ -40,18 +67,10 @@ Harmonizing **metadata** *with LLM based tools*:
 2. File structure
 3. Study metadata (fetching from repository HTMLs too)
 
-For the LLM-assisted workflow, following **tools** are suggested: Github Copilot in VS Code, LLMAnything. 
-Pick **any LLM** really, smaller LLMs tend to hallucinate more, therefore it is more interesting if they can make it too!
-Suggestions bigger LLMs: GPT-5, Claude, Kimi-K2, DeepSeek-R1
-Suggestions smaller LLMs: SmoLM, LLaMA-7B, Qwen-7B
-
 Harmonizing **metadata** *by hand*:
 4. Annotation column names (from non-BIDS to BIDS) - working with tabular data
 5. File structure
 6. Study metadata (fetching from repository HTMLs too)
-
-For the manual harmonization, an IDE with Python / R is useful; as well as OpenRefine, an open-source tool for working with tabular data.
-
 
 Record the problems and the working time for both manual and LLM assisted harmonization.
 
