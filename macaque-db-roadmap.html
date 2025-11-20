@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Macaque Neurodevelopment MRI Dataset — Roadmap</title>
+  <style>
+    :root {
+      --bg: #0f1221;
+      --card: #161a2f;
+      --ink: #e7eaf3;
+      --muted: #a7b0c4;
+      --accent: #7cc6ff;
+      --accent-2: #7bffba;
+      --border: #2a3156;
+    }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); font: 15px/1.6 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; }
+    .wrap { max-width: 980px; margin: 40px auto; padding: 0 20px; }
+    header { margin-bottom: 24px; }
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    h2 { font-size: 20px; margin: 28px 0 12px; }
+    h3 { font-size: 16px; margin: 18px 0 8px; color: var(--accent); }
+    p { color: var(--muted); margin: 8px 0 12px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    ul { margin: 8px 0 8px 22px; }
+    code, pre { background: #0b0e1a; color: #dfe6ff; border: 1px solid var(--border); border-radius: 8px; }
+    code { padding: 0 6px; }
+    pre { padding: 12px; overflow: auto; }
+    .phase { border-left: 3px solid var(--accent); padding-left: 12px; margin: 16px 0; }
+    .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); margin-right: 6px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    footer { margin: 36px 0 24px; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>UNC–Wisconsin Rhesus Macaque Neurodevelopment MRI — Roadmap</h1>
+      <p>Concise plan to build an info page, organize scans, and surface processing pipelines and outputs for structural (T1/T2) and diffusion MRI.</p>
+      <div>
+        <span class="tag">sMRI</span>
+        <span class="tag">DTI</span>
+        <span class="tag">NRRD</span>
+        <span class="tag">Atlas-aligned</span>
+        <span class="tag">DTIPrep</span>
+      </div>
+    </header>
+
+    <section class="cards" aria-label="At a glance">
+      <div class="card">
+        <h2>At a Glance</h2>
+        <ul>
+          <li>Longitudinal macaque brain MRI spanning early postnatal to ~3 years.</li>
+          <li>Each scan includes structural (T1/T2) and diffusion MRI.</li>
+          <li>T1/T2 available in original scanner space and rigid atlas space (NRRD).</li>
+          <li>Diffusion provided as raw DWIs plus preprocessed outputs and tensor-derived maps.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Key Resources</h2>
+        <ul>
+          <li><a href="https://data.kitware.com/#collection/54b582c38d777f4362aa9cb3" target="_blank" rel="noreferrer noopener">Data collection (Kitware)</a></li>
+          <li><a href="https://www.nitrc.org/projects/uncuw_macdevmri" target="_blank" rel="noreferrer noopener">Project page (NITRC)</a></li>
+          <li>Young et al., 2017, Frontiers in Neuroscience</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Roadmap Phases</h2>
+
+      <div class="phase card">
+        <h3>Phase 1 — Info Page</h3>
+        <ul>
+          <li>Example slices at representative ages (e.g., ~8 months, ~14 months).</li>
+          <li>Tractography volume examples without subject/session identifiers.</li>
+          <li>Processing flowcharts:
+            <ul>
+              <li><strong>sMRI</strong>: field correction → atlas alignment → skull stripping.</li>
+              <li><strong>DTI</strong>: artifact correction (DTIPrep) → tensor estimation → skull stripping.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="phase card">
+        <h3>Phase 2 — Data Organization</h3>
+        <ul>
+          <li>Parse subject list with scan timepoints.</li>
+          <li>Subject directories → timepoint directories → modality folders (sMRI, DTI).</li>
+          <li><strong>sMRI</strong>:
+            <ul>
+              <li>Original data subfolder.</li>
+              <li>Atlas-registered subfolder with manual and auto brain masks.</li>
+              <li>Formats: NRRD.</li>
+            </ul>
+          </li>
+          <li><strong>DTI</strong>:
+            <ul>
+              <li><em>ORIG</em>: raw diffusion-weighted images.</li>
+              <li><em>MASKMANUAL</em>: manual mask folder (may be empty initially).</li>
+              <li><em>AUTOQC</em>: baseline, DTI_FA, DTI_MD, iDWI (auto QC products).</li>
+              <li><em>PROCESSED</em>: B0, DTI, FA, iDWI, MD (tensor-derived outputs).</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="phase card">
+        <h3>Phase 3 — Surfacing Outputs</h3>
+        <ul>
+          <li>Gallery for key modalities (T1, T2, FA, MD, iDWI, B0).</li>
+          <li>Download pointers for original and atlas-registered sMRI (NRRD).</li>
+          <li>Overview of DTI preprocessing (DTIPrep) and tensor estimation.</li>
+          <li>Brain mask availability: manual and auto (sMRI).</li>
+        </ul>
+      </div>
+
+      <div class="phase card">
+        <h3>Phase 4 — Quality & Provenance</h3>
+        <ul>
+          <li>Summarize AUTOQC outputs and how to interpret them.</li>
+          <li>Document minimal provenance for each product (tool, parameters, version).</li>
+          <li>Link to primary resources and canonical publication for citation.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Directory Schema</h2>
+      <div class="card">
+<pre>subject_list.txt  # subject IDs and scan times
+sub-XX/
+  [timepoint]/
+    sMRI/
+      ORIGINAL/
+      REG2ATLAS/
+        reg2atlas/  # transforms and aligned volumes
+        masks/
+          manual/
+          auto/
+    DTI/
+      ORIG/        # raw DWIs
+      MASKMANUAL/  # manual masks (may be empty)
+      AUTOQC/      # baseline, DTI_FA, DTI_MD, iDWI
+      PROCESSED/   # B0, DTI, FA, iDWI, MD
+</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>Pipelines</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>sMRI</h3>
+          <ul>
+            <li>Field inhomogeneity correction.</li>
+            <li>Rigid alignment to common atlas space.</li>
+            <li>Skull stripping (manual and automated masks).</li>
+            <li>Deliverables: original and atlas-registered T1/T2 (NRRD), masks.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>DTI</h3>
+          <ul>
+            <li>Artifact/motion correction via DTIPrep.</li>
+            <li>Tensor estimation.</li>
+            <li>Skull stripping.</li>
+            <li>Deliverables: raw DWIs, QC outputs, tensor maps (FA, MD, iDWI, B0).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Action Items</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>Info Page Content</h3>
+          <ul>
+            <li>Curate age-based slice examples (~8m, ~14m).</li>
+            <li>Render tractography volume snapshots (de-identified).</li>
+            <li>Publish pipeline flowcharts (sMRI, DTI).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Data Wiring</h3>
+          <ul>
+            <li>Load subject/timepoint table from <code>subject_list.txt</code>.</li>
+            <li>Map directory structure to UI routes.</li>
+            <li>Validate presence of expected modalities per timepoint.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>QC & Provenance</h3>
+          <ul>
+            <li>Summarize AUTOQC metrics and definitions.</li>
+            <li>Record tool versions and key parameters (DTIPrep, registration).</li>
+            <li>Provide citation and dataset attribution guidance.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Links</h2>
+      <div class="card">
+        <ul>
+          <li><a href="https://data.kitware.com/#collection/54b582c38d777f4362aa9cb3" target="_blank" rel="noreferrer noopener">Kitware Collection</a></li>
+          <li><a href="https://www.nitrc.org/projects/uncuw_macdevmri" target="_blank" rel="noreferrer noopener">NITRC Project Page</a></li>
+          <li>Young JT et al. (2017) Frontiers in Neuroscience.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      <p>Roadmap derived from project notes; external descriptions paraphrased. Update as assets and directories are verified.</p>
+    </footer>
+  </div>
+</body>
+</html>

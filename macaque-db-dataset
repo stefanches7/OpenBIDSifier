@@ -1,0 +1,30 @@
+- https://data.kitware.com/#collection/54b582c38d777f4362aa9cb3
+
+- info page
+    - example slices by time (8months, 14 months)
+    - tractography volume examples without reference to a subject or session
+    - flowchart of pipelines
+        - sMRI: field corr, alignment to atlas, skull stripping
+        - DTI (tractography): DTIPrep (artifact corr), tensor estimation, skull stripping
+
+
+
+- scan data
+    
+    - subject txt with scan times
+    - subject directories
+        - subdirectories: scan time names directories
+            - subdirectories: modalities (sMRI, DTI)
+                - sMRI: original data subdir, reg2atlas subdir: inside the latter, reg2atlas, manual brain masks and auto brain masks
+                    - in NRRD format
+                - DTI: ORIG - raw data?
+                    - MASKMANUAL - empty dir
+                    - AUTOQC: baseline, DTI_FA, DTI_MD, IDWI - unidentified modalities
+                    - PROCESSED: B0, DTI, FA, IDWI, MD
+
+- Google search: 
+    - https://www.nitrc.org/projects/uncuw_macdevmri
+    - "This is a macaque brain MRI database characterizing the normal postnatal macaque brain development. This longitudinal primate database was acquired from a cohort of healthy macaque monkeys ranging from a few week olds up to 3-year-old adolescents.
+"
+    - "Each scan consists of structural (both T1 and T2) and diffusion MRI. T1 and T2 are provided as NRRD format in the original scanner space as well as in a common atlas space where they are rigidly aligned. Diffusion MRI is provided as raw diffusion weighted images. In addition, pre-processing was performed including motion and eddy current distortion correction on the diffusion weighted MR and tensors were calculated with diffusion property maps (FA, MD, Baseline and iDWI)."
+    - publication link: Young JT et al. The UNC-Wisconsin Rhesus Macaque Neurodevelopment Database: A Structural MRI and DTI Database of Early Postnatal Development. Frontiers in Neuroscience. 2017 Feb 2;11:292–11.
