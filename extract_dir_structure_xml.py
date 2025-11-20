@@ -2,8 +2,6 @@ import sys
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
-FOLDER_LOCATION = sys.argv[1] if len(sys.argv) > 1 else "sample_dataset"
-
 def build_xml(dir_path: Path, root_level: bool = True) -> ET.Element:
     """
     Recursively build the XML tree.
@@ -43,7 +41,7 @@ def indent(elem: ET.Element, level: int = 0) -> None:
     if level and (not elem.tail or not elem.tail.strip()):
         elem.tail = i
 
-def main(directory: str = FOLDER_LOCATION) -> None:
+def main(directory: str = "sample_dataset") -> None:
     path = Path(directory)
     if not path.is_dir():
         print(f"Error: '{directory}' is not a directory.", file=sys.stderr)
