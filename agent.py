@@ -1,9 +1,7 @@
 from typing import Optional, Dict, Any
 import os
 from dotenv import load_dotenv
-
 import dspy
-from openai import OpenAI
 
 import prompts as prompts_mod
 
