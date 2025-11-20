@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
-FOLDER_LOCATION = r"C:\src\AI-assisted-Neuroimaging-harmonization"
+FOLDER_LOCATION = sys.argv[1] if len(sys.argv) > 1 else "sample_dataset"
 
 def build_xml(dir_path: Path, root_level: bool = True) -> ET.Element:
     """
