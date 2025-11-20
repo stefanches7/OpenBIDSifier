@@ -1,0 +1,22 @@
+
+- dataset.json
+- participants.tsv
+- keep CITATION.cff or create new
+- keep LICENSE.txt or create new
+- directories moving structure
+- formats
+- BIDS validator
+
+
+(optional) - scan-level annotation
+(optional) - modality-specific files
+
+Context:
+- XML directory structure
+- README
+- publication (excerpts?)
+- citation? (optional)
+- license? (optional)
+
+Vision: Give a path to a non-BIDS dataset. Supply additional files (publication, README, info website etc.).
+LLM based agent runs the steps & prompts user for manual validation. At the end 
