@@ -36,7 +36,11 @@ def _print_commands(commands: List[str]) -> None:
     if not commands:
         print("(No commands detected in fenced bash block.)")
         return
-    print("\nProposed commands (NOT executed):")
+    print("-----"*10)
+
+    print("COMMANDS TO EXECUTE:")
+    
+    print("-----"*10)
     for c in commands:
         print(f"  {c}")
 
@@ -53,7 +57,15 @@ def short_divider(title: str) -> None:
     print("\n" + "=" * 80)
     print(title)
     print("=" * 80 + "\n")
-
+    
+def enter_feedback_loop(agent: BIDSifierAgent, context: dict) -> dict:
+    feedback = input("\nAny comments or corrections to the summary? (press Enter to skip): ").strip()
+    while feedback:
+        context["user_feedback"] += feedback
+        agent_response = agent.run_query(feedback)
+        print(agent_response)
+        feedback = input("\nAny additional comments or corrections? (press Enter to skip): ").strip()
+    return context
 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
@@ -82,6 +94,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "readme_text": readme_text,
         "publication_text": publication_text,
         "output_root": args.output_root,
+        "user_feedback": "",
     }
 
     command_env = {
@@ -99,40 +112,36 @@ def main(argv: Optional[List[str]] = None) -> int:
     short_divider("Step 1: Understand dataset")
     summary = agent.run_step("summary", context)
     print(summary)
+    context = enter_feedback_loop(agent, context)
     if not prompt_yes_no("Proceed to create BIDS root?", default=True):
         return 0
-
-    short_divider("Step 2: Propose commands to create BIDS root")
-    root_plan = agent.run_step("create_root", context)
-    print(root_plan)
-    cmds = parse_commands_from_markdown(root_plan)
-    _print_commands(cmds)
-    if not prompt_yes_no("Proceed to create metadata files?", default=True):
-        return 0
-
-    short_divider("Step 3: Propose commands to create metadata files")
+    
+    short_divider("Step 2: Propose commands to create metadata files")
     meta_plan = agent.run_step("create_metadata", context)
     print(meta_plan)
     cmds = parse_commands_from_markdown(meta_plan)
     _print_commands(cmds)
+    context = enter_feedback_loop(agent, context)
     if not prompt_yes_no("Proceed to create empty BIDS structure?", default=True):
         return 0
 
-    short_divider("Step 4: Propose commands to create dataset structure")
+    short_divider("Step 3: Propose commands to create dataset structure")
     struct_plan = agent.run_step("create_structure", context)
     print(struct_plan)
     cmds = parse_commands_from_markdown(struct_plan)
     _print_commands(cmds)
+    context = enter_feedback_loop(agent, context)
     if not prompt_yes_no("Proceed to propose renaming/moving?", default=True):
         return 0
 
-    short_divider("Step 5: Propose commands to rename/move files")
+    short_divider("Step 4: Propose commands to rename/move files")
     move_plan = agent.run_step("rename_move", context)
     print(move_plan)
     cmds = parse_commands_from_markdown(move_plan)
     _print_commands(cmds)
+    context = enter_feedback_loop(agent, context)
 
-    print("\nAll steps completed. Commands were only displayed (never executed). Use them manually or in a future Gradio/HF Space interface.")
+    print("\nAll steps completed. Commands were only displayed - use them manually")
     return 0
 
 
