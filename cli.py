@@ -65,7 +65,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--readme", dest="readme_path", help="Path to dataset README file", required=False)
     parser.add_argument("--publication", dest="publication_path", help="Path to a publication/notes file", required=False)
     parser.add_argument("--output-root", dest="output_root", help="Target BIDS root directory", required=True)
-    parser.add_argument("--model", dest="model", help="OpenAI model name", default=os.getenv("BIDSIFIER_MODEL", "gpt-4o-mini"))
+    parser.add_argument("--provider", dest="provider", help="Provider name or identifier, default OpeanAI", required=False, default="openai")
+    parser.add_argument("--model", dest="model", help="Model name to use", default=os.getenv("BIDSIFIER_MODEL", "gpt-4o-mini"))
     # Execution is intentionally disabled; we only display commands.
     # Keeping --dry-run for backward compatibility (no effect other than display).
     parser.add_argument("--dry-run", dest="dry_run", help="Display-only (default behavior)", action="store_true")
@@ -93,7 +94,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.publication_path:
         command_env["PUBLICATION_PATH"] = os.path.abspath(args.publication_path)
 
-    agent = BIDSifierAgent(model=args.model)
+    agent = BIDSifierAgent(provider=args.provider, model=args.model)
 
     short_divider("Step 1: Understand dataset")
     summary = agent.run_step("summary", context)

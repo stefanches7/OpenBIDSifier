@@ -2,6 +2,7 @@ from typing import Optional, Dict, Any
 import os
 from dotenv import load_dotenv
 
+import dspy
 from openai import OpenAI
 
 import prompts as prompts_mod
@@ -10,11 +11,15 @@ import prompts as prompts_mod
 class BIDSifierAgent:
 	"""Wrapper around OpenAI chat API for step-wise BIDSification."""
 
-	def __init__(self, *, model: Optional[str] = None, temperature: float = 0.2):
+	def __init__(self, *, provider: Optional[str] = None, model: Optional[str] = None, temperature: float = 0.2):
 		load_dotenv()
-		if not os.getenv("OPENAI_API_KEY"):
-			raise RuntimeError("OPENAI_API_KEY not set in environment.")
-		self.client = OpenAI()
+		
+		if provider=="openai":
+			lm = dspy.LM(f"{provider}/{model}", api_key=os.getenv("OPENAI_API_KEY"))
+		else:
+			lm = dspy.LM(f"{provider}/{model}", api_key="")
+		dspy.configure(lm=lm)
+		self.llm = lm
 		self.model = model or os.getenv("BIDSIFIER_MODEL", "gpt-4o-mini")
 		self.temperature = temperature
 
@@ -63,15 +68,14 @@ class BIDSifierAgent:
 	def run_step(self, step: str, context: Dict[str, Any]) -> str:
 		system_msg = prompts_mod.system_prompt()
 		user_msg = self._build_user_prompt(step, context)
-		resp = self.client.chat.completions.create(
-			model=self.model,
-			temperature=self.temperature,
+		resp = self.llm(
 			messages=[
 				{"role": "system", "content": system_msg},
 				{"role": "user", "content": user_msg},
 			],
+			temperature=self.temperature,
 		)
-		return resp.choices[0].message.content
+		return resp[0]
 
 
 __all__ = ["BIDSifierAgent"]
