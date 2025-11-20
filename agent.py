@@ -13,14 +13,21 @@ class BIDSifierAgent:
 		load_dotenv()
 		
 		if provider=="openai":
-			lm = dspy.LM(f"{provider}/{model}", api_key=os.getenv("OPENAI_API_KEY"))
+			if model == "gpt-5":
+				temperature = 1.0
+				lm = dspy.LM(f"{provider}/{model}", api_key=os.getenv("OPENAI_API_KEY"), temperature = temperature, max_tokens = 40000)
+			else:
+				lm = dspy.LM(f"{provider}/{model}", api_key=os.getenv("OPENAI_API_KEY"), temperature = temperature)
 		else:
 			lm = dspy.LM(f"{provider}/{model}", api_key="")
+
+      
+
 		dspy.configure(lm=lm)
 		self.llm = lm
 		self.model = model or os.getenv("BIDSIFIER_MODEL", "gpt-4o-mini")
 		self.temperature = temperature
-
+ 
 	def _build_user_prompt(self, step: str, context: Dict[str, Any]) -> str:
 		dataset_xml = context.get("dataset_xml")
 		readme_text = context.get("readme_text")
