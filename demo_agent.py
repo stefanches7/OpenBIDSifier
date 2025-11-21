@@ -221,45 +221,133 @@ def call_bidsifier_step(
 def confirm_commands(
     last_state: Optional[Dict[str, Any]],
     progress_value: int,
-) -> Tuple[str, int]:
-    """
-    Confirm and execute the commands proposed in the last LLM response.
+) -> Tuple[str, str, Dict[str, Any], int, str, str]:
+    """Advance to the next BIDSifier step and call the agent for it.
 
     Parameters
     ----------
     last_state : dict or None
-        State returned by `call_bidsifier_step`, containing `output_root` and
-        list of `commands`. If None, nothing can be executed.
+        State from the previous `call_bidsifier_step`.
     progress_value : int
-        Current progress through steps.
+        Current progress value.
 
     Returns
     -------
-    status_message : str
-        Combined stdout/stderr/exit codes of executed commands.
+    llm_output : str
+        Raw output from the agent for the next step.
+    commands_str : str
+        Parsed commands from that output.
+    new_state : dict
+        Updated state reflecting the new step.
     new_progress : int
-        Updated progress value.
+        Updated progress value (1-based index of new step).
+    new_step_label : str
+        UI label of the advanced step (or unchanged if already at last step).
+    status_msg : str
+        Short status / info message.
     """
     if not last_state:
-        return "⚠️ No previous BIDSifier step to confirm.", progress_value
+        return (
+            "⚠️ No previous BIDSifier step to advance from.",
+            "",
+            {},
+            progress_value,
+            STEP_LABELS[0],
+            "No state available to confirm.",
+        )
+
+    current_label = last_state.get("step_label")
+    try:
+        idx = STEP_LABELS.index(current_label)
+    except (ValueError, TypeError):
+        idx = 0
+
+    # If already at last step, do not advance further.
+    if idx >= len(STEP_LABELS) - 1:
+        return (
+            "⚠️ Already at final step; cannot advance.",
+            "",
+            last_state,
+            progress_value,
+            current_label,
+            "Final step reached.",
+        )
+
+    next_label = STEP_LABELS[idx + 1]
+    next_id = BIDSIFIER_STEPS[next_label]
+
+    # Rebuild context from last_state.
+    context = build_context(
+        last_state.get("dataset_xml", "") or "",
+        last_state.get("readme_text", "") or "",
+        last_state.get("publication_text", "") or "",
+        last_state.get("output_root", "") or "",
+    )
+
+    agent = BIDSifierAgent(
+        provider=last_state.get("provider", "openai"),
+        model=last_state.get("model", "gpt-4o-mini"),
+    )
+
+    llm_output = agent.run_step(next_id, context)
+    commands = parse_commands_from_markdown(llm_output)
+    commands_str = "\n".join(commands) if commands else ""
+
+    new_state = dict(last_state)
+    new_state.update(
+        {
+            "step_label": next_label,
+            "step_id": next_id,
+            "llm_output": llm_output,
+            "commands": commands,
+        }
+    )
+
+    new_progress = max(progress_value, idx + 2)  # idx is 0-based; progress is 1-based
+    status_msg = f"Advanced to step '{next_label}'. Parsed {len(commands)} command(s)."
+
+    return llm_output, commands_str, new_state, new_progress, next_label, status_msg
+
+
+def run_commands(
+    last_state: Optional[Dict[str, Any]],
+    progress_value: int,
+) -> Tuple[str, int, str]:
+    """Execute parsed shell commands for the current step, then advance step pointer.
+
+    Parameters
+    ----------
+    last_state : dict or None
+        State containing commands to execute.
+    progress_value : int
+        Current progress value.
+
+    Returns
+    -------
+    execution_log : str
+        Markdown log of command execution results.
+    new_progress : int
+        Updated progress value after execution.
+    new_step_label : str
+        Updated dropdown label pointing to next step (or unchanged if final).
+    """
+    if not last_state:
+        return "⚠️ No previous BIDSifier step to run.", progress_value, STEP_LABELS[0]
 
     output_root = last_state.get("output_root", "").strip()
     commands: List[str] = last_state.get("commands", [])
+    step_label = last_state.get("step_label")
 
     if not output_root:
-        return "⚠️ Output root is empty; cannot execute commands.", progress_value
-
+        return "⚠️ Output root is empty; cannot execute commands.", progress_value, step_label or STEP_LABELS[0]
     if not commands:
-        return "⚠️ No commands detected in the last BIDSifier output.", progress_value
+        return "⚠️ No commands detected to execute.", progress_value, step_label or STEP_LABELS[0]
 
     root = Path(output_root)
     root.mkdir(parents=True, exist_ok=True)
 
     all_details: List[str] = []
-
     for raw_cmd in commands:
-        # Support multi-line shell with backslash continuations *within* a line,
-        # but commands already come one-per-line from `parse_commands_from_markdown`.
         for cmd in split_shell_commands(raw_cmd):
             proc = subprocess.run(
                 cmd,
@@ -277,16 +365,20 @@ def confirm_commands(
 
     status = "### Command execution log\n\n" + "\n\n".join(all_details)
 
-    # Heuristic: if we executed commands for this step, bump progress to max
-    # of current and the step index.
-    step_label = last_state.get("step_label")
     try:
         idx = STEP_LABELS.index(step_label)
-        new_progress = max(progress_value, idx + 1)
     except (ValueError, TypeError):
+        idx = 0
+
+    # Advance pointer (without auto-calling agent) if not at final step.
+    if idx < len(STEP_LABELS) - 1:
+        new_step_label = STEP_LABELS[idx + 1]
+        new_progress = max(progress_value, idx + 2)
+    else:
+        new_step_label = STEP_LABELS[idx]
         new_progress = progress_value
 
-    return status, new_progress
+    return status, new_progress, new_step_label
 
 
 def run_bids_validation(output_root: str) -> Tuple[str, str]:
@@ -386,9 +478,15 @@ with gr.Blocks(
     )
 
     with gr.Row():
+        # File uploader + editable textbox for dataset XML content.
+        dataset_xml_file = gr.File(
+            label="Upload dataset_structure.xml (optional)",
+            file_types=[".xml", ".txt"],
+            type="filepath",
+        )
         dataset_xml_input = gr.Textbox(
-            label="Dataset XML",
-            placeholder="Paste dataset_structure.xml content here (optional)",
+            label="Dataset XML (editable)",
+            placeholder="Paste or upload dataset_structure.xml content here",
             lines=8,
         )
         readme_input = gr.Textbox(
@@ -460,7 +558,8 @@ with gr.Blocks(
         interactive=True,
     )
 
-    confirm_button = gr.Button("Confirm / Run commands", variant="primary")
+    confirm_button = gr.Button("Confirm (advance & call next step)", variant="primary")
+    run_commands_button = gr.Button("Run Commands", variant="secondary")
     bids_validator_button = gr.Button("Run BIDS Validator", variant="primary")
 
     status_msg = gr.Markdown(label="Status / execution log")
@@ -486,10 +585,31 @@ with gr.Blocks(
         outputs=[llm_output_box, commands_box, last_state, progress_bar],
     )
 
+    # Callback to load uploaded file content into the textbox.
+    def _load_dataset_xml(file_path: Optional[str]) -> str:
+        if not file_path:
+            return ""
+        try:
+            return Path(file_path).read_text(encoding="utf-8", errors="ignore")
+        except Exception as e:
+            return f"⚠️ Failed to read file: {e}"
+
+    dataset_xml_file.change(
+        fn=_load_dataset_xml,
+        inputs=[dataset_xml_file],
+        outputs=[dataset_xml_input],
+    )
+
     confirm_button.click(
         fn=confirm_commands,
         inputs=[last_state, progress_bar],
-        outputs=[status_msg, progress_bar],
+        outputs=[llm_output_box, commands_box, last_state, progress_bar, step_dropdown, status_msg],
+    )
+
+    run_commands_button.click(
+        fn=run_commands,
+        inputs=[last_state, progress_bar],
+        outputs=[status_msg, progress_bar, step_dropdown],
     )
 
     bids_validator_button.click(
