@@ -33,7 +33,7 @@ def system_prompt() -> str:
 
 def summarize_dataset_prompt(*, dataset_xml: Optional[str], readme_text: Optional[str], publication_text: Optional[str]) -> str:
 	return f"""
-Step 1/5 — Understand the dataset and produce a short summary.
+Step 1/4 — Understand the dataset and produce a short summary.
 
 Requirements:
 - 8–15 concise bullets covering subjects/sessions, modalities (T1w/T2w/DWI/fMRI/etc.), tasks, naming patterns, id conventions.
@@ -47,25 +47,11 @@ Output:
 """
 
 
-def create_root_prompt(*, output_root: str, dataset_xml: Optional[str], readme_text: Optional[str], publication_text: Optional[str]) -> str:
-	return f"""
-Step 2/5 — Propose commands to create a new BIDS root directory.
-
-Constraints:
-- Use $OUTPUT_ROOT if present, otherwise use: {output_root}
-- Use mkdir -p; don't overwrite existing files.
-- Optionally create a minimal skeleton (.bidsignore, empty dirs if helpful).
-
-Context:\n{_ctx(dataset_xml, readme_text, publication_text)}
-
-Output:
-- A brief plan (2–5 bullets) followed by exactly one fenced bash block with commands only.
-"""
 
 
 def create_metadata_prompt(*, output_root: str, dataset_xml: Optional[str], readme_text: Optional[str], publication_text: Optional[str]) -> str:
 	return f"""
-Step 3/5 — Propose commands to create required BIDS metadata files.
+Step 2/4 — Propose commands to create required BIDS metadata files.
 
 Must include:
 - dataset_description.json (Name, BIDSVersion, License if known)
@@ -86,7 +72,7 @@ Output:
 
 def create_structure_prompt(*, output_root: str, dataset_xml: Optional[str], readme_text: Optional[str], publication_text: Optional[str]) -> str:
 	return f"""
-Step 4/5 — Propose commands to create the BIDS directory structure.
+Step 3/4 — Propose commands to create the BIDS directory structure.
 
 Goals:
 - Infer subjects, sessions, and modalities; create sub-<label>/, optional ses-<label>/, and modality folders (anat, dwi, func, fmap, etc.).
@@ -105,7 +91,7 @@ Output:
 
 def rename_and_move_prompt(*, output_root: str, dataset_xml: Optional[str], readme_text: Optional[str], publication_text: Optional[str]) -> str:
 	return f"""
-Step 5/5 — Propose commands to rename and move files into the BIDS structure.
+Step 4/4 — Propose commands to rename and move files into the BIDS structure.
 
 Requirements:
 - Map original names to BIDS filenames; demonstrate patterns (e.g., with find/xargs) carefully.
