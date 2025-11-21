@@ -8,6 +8,7 @@ from pathlib import Path
 from logging_utils import setup_logging
 
 from agent import BIDSifierAgent
+from prompts import _ctx
 
 
 def _read_pdf(path: str) -> str:
@@ -85,14 +86,17 @@ def short_divider(title: str) -> None:
     print(title)
     print("=" * 80 + "\n")
     
-def enter_feedback_loop(agent: BIDSifierAgent, context: dict, logger: Optional[logging.Logger] = None) -> dict:
+def enter_feedback_loop(agent: BIDSifierAgent, context: dict, last_model_reply: str, logger: Optional[logging.Logger] = None) -> dict:
     feedback = input("\nAny comments or corrections to the summary? (press Enter to skip): ").strip()
     while feedback:
         if logger:
             logger.info("User feedback: %s", feedback)
         context["user_feedback"] += feedback
-        agent_response = agent.run_query(feedback)
+        ctx = f"\n{_ctx(context['dataset_xml'], context['readme_text'], context['publication_text'])}"
+        query = f"Tackle the user feedback. \n ### Context:### {ctx} \n ### Your previous message:### {last_model_reply} \n ### User feedback:### {feedback} \n ###Output:###"
+        agent_response = agent.run_query(query)
         print(agent_response)
+        last_model_reply = agent_response
         feedback = input("\nAny additional comments or corrections? (press Enter to skip): ").strip()
     return context
 
