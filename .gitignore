@@ -1,1 +1,4 @@
 /Non_Bids_Dataset
+.env
+__pycache__/
+.venv/
