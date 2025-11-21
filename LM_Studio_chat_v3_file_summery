@@ -1,0 +1,128 @@
+import requests
+import json
+import os
+
+url = "http://localhost:1234/v1/chat/completions"
+headers = {
+    "Content-Type": "application/json"
+}
+
+# System instruction
+conversation_history = [
+    {
+        "role": "system",
+        "content": "You are an assistant that helps build a BIDS dataset_description.json file. "
+                   "Because the file tree may be extremely large, you will receive only 100 items at a time."
+    }
+]
+
+# Step 1: Collect basic dataset info
+def get_basic_dataset_info():
+    print("Please provide the basic details of your dataset:")
+    dataset_name = input("Dataset Name: ")
+    dataset_version = input("Dataset Version: ")
+    dataset_description = input("Dataset Description: ")
+
+    # Authors
+    authors_input = input("Authors (comma separated, type 'None' if unknown): ").strip()
+    authors = None if authors_input.lower() == "none" else [a.strip() for a in authors_input.split(",")]
+
+    # References
+    references_input = input("References and Citations (comma separated, type 'None' if unknown): ").strip()
+    references = None if references_input.lower() == "none" else [r.strip() for r in references_input.split(",")]
+
+    return {
+        "name": dataset_name,
+        "version": dataset_version,
+        "description": dataset_description,
+        "authors": authors,
+        "references": references
+    }
+
+# Step 2: Root folder
+def get_root_folder():
+    folder = input("Please provide the root folder containing the dataset files: ")
+    while not os.path.isdir(folder):
+        print("Invalid folder. Try again.")
+        folder = input("Please provide the root folder containing the dataset files: ")
+    return folder
+
+# Step 3: Load folder content in batches of 100
+def get_folder_batches(folder, batch_size=100):
+    items = os.listdir(folder)
+    full_paths = [os.path.join(folder, item) for item in items]
+
+    # Break into batches of up to 100
+    for i in range(0, len(full_paths), batch_size):
+        yield full_paths[i:i + batch_size], i // batch_size + 1  # return (batch_items, batch_number)
+
+# Step 4: LLM interaction + JSON building
+def process_and_build_json(batches, basic_info):
+    dataset_description = {
+        "Name": basic_info["name"],
+        "BIDSVersion": "1.0.0",
+        "DatasetType": "raw",
+        "License": "CC0",
+        "Authors": basic_info["authors"] if basic_info["authors"] else "None",
+        "Acknowledgements": "None",
+        "HowToAcknowledge": "None",
+        "ReferencesAndLinks": basic_info["references"] if basic_info["references"] else "None",
+        "DatasetDescription": basic_info["description"]
+    }
+
+    for batch_items, batch_number in batches:
+        # Describe what is being sent
+        message = (
+            f"Batch {batch_number}: Here are up to 100 items from the dataset root.\n"
+            f"Total items in this batch: {len(batch_items)}\n"
+            f"Items:\n" + "\n".join(batch_items)
+        )
+
+        conversation_history.append({"role": "user", "content": message})
+
+        data = {
+            "model": "deepseek/deepseek-r1-0528-qwen3-8b",
+            "messages": conversation_history,
+            "temperature": 0.7,
+            "max_tokens": 500,
+            "stream": False
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        model_response = response.json()
+        last_message = model_response['choices'][0]['message']['content']
+
+        print("\n--- LLM Response for Batch", batch_number, "---")
+        print(last_message)
+
+        conversation_history.append({"role": "assistant", "content": last_message})
+
+        # Store response under the batch key
+        dataset_description[f"batch_{batch_number}"] = last_message
+
+    return dataset_description
+
+# Step 5: Save JSON
+def save_json(dataset_description):
+    out = "dataset_description.json"
+    with open(out, "w") as f:
+        json.dump(dataset_description, f, indent=4)
+    print(f"\nSaved: {out}")
+
+# Main
+def main():
+    basic_info = get_basic_dataset_info()
+
+    # Infer authors from citations if possible
+    if basic_info["authors"] is None and basic_info["references"]:
+        print("Attempting to infer authors from citations...")
+        basic_info["authors"] = ["Author inferred from reference: " + r for r in basic_info["references"]]
+
+    root_folder = get_root_folder()
+    batches = get_folder_batches(root_folder, batch_size=100)
+
+    dataset_json = process_and_build_json(batches, basic_info)
+    save_json(dataset_json)
+
+if __name__ == "__main__":
+    main()
