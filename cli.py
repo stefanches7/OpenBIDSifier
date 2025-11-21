@@ -7,11 +7,35 @@ from typing import List, Optional
 from agent import BIDSifierAgent
 
 
+def _read_pdf(path: str) -> str:
+    """Extract text from a PDF file using pypdf."""
+    try:
+        from pypdf import PdfReader
+    except ImportError as e:
+        raise RuntimeError(
+            "Reading PDFs requires the 'pypdf' package. Install it with: pip install pypdf"
+        ) from e
+    text_parts: List[str] = []
+    with open(path, "rb") as f:
+        reader = PdfReader(f)
+        for i, page in enumerate(reader.pages):
+            try:
+                text = page.extract_text() or ""
+            except Exception:
+                text = ""
+            if text.strip():
+                # Add lightweight page markers to help the LLM
+                text_parts.append(f"\n\n=== Page {i+1} ===\n{text.strip()}")
+    return "\n".join(text_parts).strip()
+
 def _read_optional(path: Optional[str]) -> Optional[str]:
     if not path:
         return None
     if not os.path.isfile(path):
         raise FileNotFoundError(f"File not found: {path}")
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".pdf":
+        return _read_pdf(path)
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
         return f.read()
 
