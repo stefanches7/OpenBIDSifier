@@ -9,15 +9,15 @@ import prompts
 class BIDSifierAgent:
 	"""Wrapper around OpenAI chat API for step-wise BIDSification."""
 
-	def __init__(self, *, provider: Optional[str] = None, model: Optional[str] = None, temperature: float = 0.2):
+	def __init__(self, *, provider: Optional[str] = None, model: Optional[str] = None, openai_api_key: Optional[str] = None, temperature: float = 0.2):
 		load_dotenv()
 		
 		if provider=="openai":
 			if model == "gpt-5": #reasoning model that requires special handling
 				temperature = 1.0
-				lm = dspy.LM(f"{provider}/{model}", api_key=os.getenv("OPENAI_API_KEY"), temperature = temperature, max_tokens = 40000)
+				lm = dspy.LM(f"{provider}/{model}", api_key=openai_api_key or os.getenv("OPENAI_API_KEY"), temperature = temperature, max_tokens = 40000)
 			else:
-				lm = dspy.LM(f"{provider}/{model}", api_key=os.getenv("OPENAI_API_KEY"), temperature = temperature, max_tokens = 10000)
+				lm = dspy.LM(f"{provider}/{model}", api_key=openai_api_key or os.getenv("OPENAI_API_KEY"), temperature = temperature, max_tokens = 10000)
 		else:
 			lm = dspy.LM(f"{provider}/{model}", api_key="", max_tokens=10000)
 

@@ -122,6 +122,7 @@ def build_context(
 # Core callbacks
 
 def call_bidsifier_step(
+    openai_api_key: str,
     dataset_xml: str,
     readme_text: str,
     publication_text: str,
@@ -184,7 +185,7 @@ def call_bidsifier_step(
     step_id = BIDSIFIER_STEPS[step_label]
     context = build_context(dataset_xml, readme_text, publication_text, output_root)
 
-    agent = BIDSifierAgent(provider=provider, model=model)
+    agent = BIDSifierAgent(provider=provider, model=model, openai_api_key=openai_api_key)
 
     # Decide whether to use the structured step prompt or a free-form query:
     if manual_prompt.strip():
@@ -203,6 +204,7 @@ def call_bidsifier_step(
         step_index = 0
 
     state = {
+        "openai_api_key": openai_api_key,
         "dataset_xml": dataset_xml,
         "readme_text": readme_text,
         "publication_text": publication_text,
@@ -386,6 +388,12 @@ with gr.Blocks(
     )
 
     with gr.Row():
+        openai_key_input = gr.Textbox(
+            label="OpenAI API Key",
+            placeholder="Paste your OpenAI API key here",
+            lines=1,
+            type="password",
+        )
         dataset_xml_input = gr.Textbox(
             label="Dataset XML",
             placeholder="Paste dataset_structure.xml content here (optional)",
@@ -474,6 +482,7 @@ with gr.Blocks(
     call_button.click(
         fn=call_bidsifier_step,
         inputs=[
+            openai_key_input,
             dataset_xml_input,
             readme_input,
             publication_input,
