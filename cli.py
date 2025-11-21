@@ -1,8 +1,11 @@
 import argparse
+import logging
 import os
 import re
 import sys
 from typing import List, Optional
+from pathlib import Path
+from logging_utils import setup_logging
 
 from agent import BIDSifierAgent
 
@@ -58,9 +61,11 @@ def short_divider(title: str) -> None:
     print(title)
     print("=" * 80 + "\n")
     
-def enter_feedback_loop(agent: BIDSifierAgent, context: dict) -> dict:
+def enter_feedback_loop(agent: BIDSifierAgent, context: dict, logger: Optional[logging.Logger] = None) -> dict:
     feedback = input("\nAny comments or corrections to the summary? (press Enter to skip): ").strip()
     while feedback:
+        if logger:
+            logger.info("User feedback: %s", feedback)
         context["user_feedback"] += feedback
         agent_response = agent.run_query(feedback)
         print(agent_response)
@@ -79,11 +84,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--output-root", dest="output_root", help="Target BIDS root directory", required=True)
     parser.add_argument("--provider", dest="provider", help="Provider name or identifier, default OpeanAI", required=False, default="openai")
     parser.add_argument("--model", dest="model", help="Model name to use", default=os.getenv("BIDSIFIER_MODEL", "gpt-4o-mini"))
+    parser.add_argument("--project", dest="project", help="Project name for log file prefix", required=False)
     # Execution is intentionally disabled; we only display commands.
     # Keeping --dry-run for backward compatibility (no effect other than display).
     parser.add_argument("--dry-run", dest="dry_run", help="Display-only (default behavior)", action="store_true")
 
     args = parser.parse_args(argv)
+
+    project_name = args.project or Path(args.output_root).name or Path(os.getcwd()).name
+    logger, _listener = setup_logging(project_name=project_name)
+    logger.info("Initialized logging for project '%s'", project_name)
 
     dataset_xml = _read_optional(args.dataset_xml_path)
     readme_text = _read_optional(args.readme_path)
@@ -112,8 +122,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     short_divider("Step 1: Understand dataset")
     summary = agent.run_step("summary", context)
     print(summary)
-    context = enter_feedback_loop(agent, context)
+    logger.info(summary)
+    logger.info("Summary step completed (length=%d chars)", len(summary))
+    context = enter_feedback_loop(agent, context, logger)
     if not prompt_yes_no("Proceed to create BIDS root?", default=True):
+        logger.info("User aborted after summary step.")
         return 0
     
     short_divider("Step 2: Propose commands to create metadata files")
@@ -121,8 +134,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(meta_plan)
     cmds = parse_commands_from_markdown(meta_plan)
     _print_commands(cmds)
-    context = enter_feedback_loop(agent, context)
+    logger.info("Metadata plan produced %s", cmds)
+    logger.info("Metadata plan produced %d commands", len(cmds))
+    context = enter_feedback_loop(agent, context, logger)
     if not prompt_yes_no("Proceed to create empty BIDS structure?", default=True):
+        logger.info("User aborted after metadata plan.")
         return 0
 
     short_divider("Step 3: Propose commands to create dataset structure")
@@ -130,8 +146,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(struct_plan)
     cmds = parse_commands_from_markdown(struct_plan)
     _print_commands(cmds)
-    context = enter_feedback_loop(agent, context)
+    logger.info("Structure plan produced %s", cmds)
+    logger.info("Structure plan produced %d commands", len(cmds))
+    context = enter_feedback_loop(agent, context, logger)
     if not prompt_yes_no("Proceed to propose renaming/moving?", default=True):
+        logger.info("User aborted after structure plan.")
         return 0
 
     short_divider("Step 4: Propose commands to rename/move files")
@@ -139,9 +158,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(move_plan)
     cmds = parse_commands_from_markdown(move_plan)
     _print_commands(cmds)
-    context = enter_feedback_loop(agent, context)
+    logger.info("Rename/move plan produced %s", cmds)
+    logger.info("Rename/move plan produced %d commands", len(cmds))
+    context = enter_feedback_loop(agent, context, logger)
 
     print("\nAll steps completed. Commands were only displayed - use them manually")
+    logger.info("All steps completed successfully.")
     return 0
 
 
