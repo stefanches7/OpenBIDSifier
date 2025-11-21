@@ -1,3 +1,7 @@
+.env
+__pycache__/
+.venv
+testing_structure.xml
 /Non_Bids_Dataset
 .env
 __pycache__/
