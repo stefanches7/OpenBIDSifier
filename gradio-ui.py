@@ -36,6 +36,47 @@ STEP_LABELS = list(BIDSIFIER_STEPS.keys())
 NUM_STEPS = len(STEP_LABELS)
 
 
+PROVIDERS_INFO = {
+    "openai": {
+        "model": "gpt-4o-mini",
+        "doc": "You can authenticate by setting the **API Key** above.",
+    },
+    "anthropic": {
+        "model": "claude-sonnet-4-5-20250929",
+        "doc": "You can authenticate by setting the **API Key** above.",
+    },
+    "databricks": {
+        "model": "databricks-llama-4-maverick",
+        "doc": (
+            "If you're on the Databricks platform, authentication is automatic"
+            " via their SDK. If not, you can set the **API Key** above."
+        ),
+    },
+    "gemini": {
+        "model": "gemini-2.5-flash",
+        "doc": "You can authenticate by setting the **API Key** above.",
+    },
+    "ollama_chat": {
+        "model": "llama3.2:1b",
+        "doc": """
+First, install Ollama and launch its server with your LM:
+
+```
+> curl -fsSL https://ollama.ai/install.sh | sh
+> ollama run llama3.2:1b
+```
+
+You can search all the Ollama models here: https://ollama.com/search
+
+You can also manually input another provider. See the
+[DSPy documentation](https://dspy.ai/api/models/LM/) for other providers and
+local LLMs.
+        """,
+        "key_base": "http://localhost:11434",
+    },
+}
+
+
 # Helpers
 
 def split_shell_commands(text: str) -> List[str]:
@@ -121,8 +162,33 @@ def build_context(
 
 # Core callbacks
 
+def select_provider(provider: str):
+    """Fills the default provider model base, and description.
+
+    Parameters
+    ----------
+    provider : str
+        The name of the provider.
+
+    Returns
+    -------
+    list
+        A list of two values: model name, and provider documentation in MD.
+    """
+    provider = provider.lower()
+    if provider not in PROVIDERS_INFO:
+        return "", "", ""
+    provider_info = PROVIDERS_INFO[provider]
+    return (
+        provider_info.get("model", ""),
+        provider_info.get("key_base", ""),
+        provider_info.get("doc", ""),
+    )
+
+
 def call_bidsifier_step(
-    openai_api_key: str,
+    api_key: str,
+    api_base: str,
     dataset_xml: str,
     readme_text: str,
     publication_text: str,
@@ -137,6 +203,10 @@ def call_bidsifier_step(
 
     Parameters
     ----------
+    api_key : str
+        LLM provider API key.
+    api_base : str
+        Local LLM base URL.
     dataset_xml : str
         Dataset XML content.
     readme_text : str
@@ -185,7 +255,9 @@ def call_bidsifier_step(
     step_id = BIDSIFIER_STEPS[step_label]
     context = build_context(dataset_xml, readme_text, publication_text, output_root)
 
-    agent = BIDSifierAgent(provider=provider, model=model, openai_api_key=openai_api_key)
+    agent = BIDSifierAgent(
+        provider=provider, model=model, api_key=api_key, api_base=api_base
+    )
 
     # Decide whether to use the structured step prompt or a free-form query:
     if manual_prompt.strip():
@@ -204,7 +276,7 @@ def call_bidsifier_step(
         step_index = 0
 
     state = {
-        "openai_api_key": openai_api_key,
+        "api_key": api_key,
         "dataset_xml": dataset_xml,
         "readme_text": readme_text,
         "publication_text": publication_text,
@@ -217,7 +289,9 @@ def call_bidsifier_step(
         "commands": commands,
     }
 
-    return llm_output, commands_str, state, step_index
+    llm_output_text = "## Raw BIDSifier output\n" + llm_output
+
+    return llm_output_text, commands_str, state, step_index
 
 
 def confirm_commands(
@@ -288,7 +362,7 @@ def confirm_commands(
 
     agent = BIDSifierAgent(
         provider=last_state.get("provider", "openai"),
-        model=last_state.get("model", "gpt-4o-mini"),
+        model=last_state.get("model", PROVIDERS_INFO["openai"]["model"]),
     )
 
     llm_output = agent.run_step(next_id, context)
@@ -480,13 +554,6 @@ with gr.Blocks(
     )
 
     with gr.Row():
-        openai_key_input = gr.Textbox(
-            label="OpenAI API Key",
-            placeholder="Paste your OpenAI API key here",
-            lines=1,
-            type="password",
-        )
-    with gr.Row():
         dataset_xml_file = gr.File(
             label="Upload dataset_structure.xml (optional)",
             file_types=[".xml", ".txt"],
@@ -509,17 +576,35 @@ with gr.Blocks(
         lines=6,
     )
 
-    with gr.Accordion("LLM settings (advanced)", open=False):
-        provider_input = gr.Dropdown(
-            label="Provider",
-            choices=["openai"],
-            value="openai",
+    with gr.Accordion("LLM settings"):
+        api_key_input = gr.Textbox(
+            label="API Key (OpenAI, Gemini, Anthropic, Databricks)",
+            placeholder=(
+                "Paste your LLM provider API key here."
+                ' See "Advanced settings" to set up non-OpenAI providers.'
+            ),
+            lines=1,
+            type="password",
         )
-        model_input = gr.Textbox(
-            label="Model",
-            value="gpt-4o-mini",
-            placeholder="e.g., gpt-4o-mini, gpt-5",
-        )
+        with gr.Accordion("Advanced settings", open=False):
+            default_provider = list(PROVIDERS_INFO.keys())[0]
+            provider_input = gr.Dropdown(
+                label="Provider",
+                choices=PROVIDERS_INFO.keys(),
+                value=default_provider,
+                interactive=True,
+            )
+            model_input = gr.Textbox(
+                label="Model",
+                value=PROVIDERS_INFO[default_provider]["model"],
+                placeholder="e.g., gpt-4o-mini, gpt-5",
+            )
+            api_base_input = gr.Textbox(
+                label="API Base (Local LLMs, other providers)",
+                placeholder="Write your API Base URL here",
+                lines=1,
+            )
+            model_doc = gr.Markdown(PROVIDERS_INFO[default_provider]["doc"])
 
     output_root_input = gr.Textbox(
         label="Output root",
@@ -554,10 +639,8 @@ with gr.Blocks(
 
     call_button = gr.Button("Call BIDSifier", variant="primary")
 
-    llm_output_box = gr.Textbox(
-        label="Raw BIDSifier output",
-        lines=10,
-        interactive=True,
+    llm_output_box = gr.Markdown(
+        label="Raw BIDSifier output", show_label=True, container=True
     )
 
     commands_box = gr.Textbox(
@@ -578,10 +661,17 @@ with gr.Blocks(
 
     # Wiring
 
+    provider_input.change(
+        fn=select_provider,
+        inputs=provider_input,
+        outputs=[model_input, api_base_input, model_doc],
+    )
+
     call_button.click(
         fn=call_bidsifier_step,
         inputs=[
-            openai_key_input,
+            api_key_input,
+            api_base_input,
             dataset_xml_input,
             readme_input,
             publication_input,

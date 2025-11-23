@@ -9,25 +9,34 @@ import prompts
 class BIDSifierAgent:
 	"""Wrapper around OpenAI chat API for step-wise BIDSification."""
 
-	def __init__(self, *, provider: str, model: str, openai_api_key: Optional[str] = None, temperature: float = 0.2):
+	def __init__(
+		self, *,
+        provider: str,
+        model: str,
+        api_key: Optional[str] = None,
+		api_base: Optional[str] = None,
+        temperature: Optional[float | None] = 0.2,
+	):
 		load_dotenv()
 		
-		if provider=="openai":
-			if model.startswith("gpt-5"): #reasoning model that requires special handling
-				temperature = 1.0
-				lm = dspy.LM(f"{provider}/{model}", api_key=openai_api_key or os.getenv("OPENAI_API_KEY"), temperature = temperature, max_tokens = 40000)
-			else:
-				lm = dspy.LM(f"{provider}/{model}", api_key=openai_api_key or os.getenv("OPENAI_API_KEY"), temperature = temperature, max_tokens = 10000)
+		if model.startswith("gpt-5"):  # reasoning model that requires special handling
+			temperature = 1.0
+			max_tokens = 40000
 		else:
-			lm = dspy.LM(f"{provider}/{model}", api_key="", max_tokens=10000)
+			temperature = None
+			max_tokens = 10000
 
-      
+		lm = dspy.LM(
+			f"{provider}/{model}",
+			api_key=api_key or os.getenv(f"{provider.upper()}_API_KEY"),
+			temperature=temperature, max_tokens=max_tokens
+		)
 
 		dspy.configure(lm=lm)
 		self.llm = lm
 		self.model = model or os.getenv("BIDSIFIER_MODEL", "gpt-4o-mini")
 		self.temperature = temperature
- 
+
 	def _build_user_prompt(self, step: str, context: Dict[str, Any]) -> str:
 		dataset_xml = context.get("dataset_xml")
 		readme_text = context.get("readme_text")
