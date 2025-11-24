@@ -14,8 +14,8 @@ license: apache-2.0
 
 This is the repository for an exploratory project Open Data BIDSifier, inspired by the accelerating progress of LLMs and their potential to automate format conversion for multi-study neuroimaging and clinical datasets.
 
-<img width="800dpi" alt="BIDSifier input" src="https://github.com/user-attachments/assets/cb7a944b-7265-42ad-9c98-0607f69a4387" />
-<img width="800dpi" alt="BIDSifier output" src="https://github.com/user-attachments/assets/92ac4af2-e4ae-4c95-b8aa-e867968e1dde" />
+<img width="600dpi" alt="BIDSifier input" src="https://github.com/user-attachments/assets/cb7a944b-7265-42ad-9c98-0607f69a4387" />
+<img width="600dpi" alt="BIDSifier output" src="https://github.com/user-attachments/assets/92ac4af2-e4ae-4c95-b8aa-e867968e1dde" />
 
 
 ## Motivation
