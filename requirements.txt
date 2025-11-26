@@ -1,5 +1,5 @@
 openai>=1.52.0
 python-dotenv>=1.0.1
 dspy
-gradio>=5.49.1
+gradio>=5.49.1,<6.0
 bids_validator
