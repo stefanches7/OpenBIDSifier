@@ -38,7 +38,7 @@ If successful, the developed data harmonizer tool will be published as a Python 
 
 ## Tools and Structure 
 
-We will use this repository (https://github.com/stefanches7/AI-assisted-Neuroimaging-harmonization) as an intermittant commit place. Please, make yourself familiar with Git and Github. [This intro](https://docs.github.com/de/get-started/start-your-journey/hello-world) can be useful for that.
+We will use this repository (https://github.com/stefanches7/OpenBIDSifier) as an intermittant commit place. Please, make yourself familiar with Git and Github. [This intro](https://docs.github.com/de/get-started/start-your-journey/hello-world) can be useful for that.
 
 ### Git guidelines
 
